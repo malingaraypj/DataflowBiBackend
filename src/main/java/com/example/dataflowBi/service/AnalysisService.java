@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.dataflowBi.DTO.AnalysisRequest;
 import com.example.dataflowBi.DTO.AnalysisResponse;
+import com.example.dataflowBi.DTO.ChartMetaData;
 import com.example.dataflowBi.repository.AnalysisRepository;
 
 @Service
@@ -22,12 +23,39 @@ public class AnalysisService {
     
     List<Map<String, Object>> rawData = analysisRepository.fetchAnalysedData(request);
     List<String> suggestedCharts = suggestCharts(request);
+    
+    ChartMetaData metadata = generateMetadata(request);
 
-    return new AnalysisResponse(rawData, suggestedCharts);
+    return new AnalysisResponse(rawData, suggestedCharts,metadata);
 }
 
 
-    private List<String> suggestCharts(AnalysisRequest request) {
+  private ChartMetaData generateMetadata(AnalysisRequest request) {
+	  	List<String> dims = request.getDimensions();
+	  	String yAxisKey = "value";
+	  	
+		String xAxisKey = null;
+		List<String> seriesKeys = new ArrayList<>();
+		List<String> facetKeys = new ArrayList<>();
+		
+		if(dims !=null && !dims.isEmpty()) {
+			// first Dimension is X-axis
+			xAxisKey = dims.get(0);
+			
+			if(dims.size()>=2) {
+				seriesKeys.add(dims.get(1));
+			}
+			
+			if(dims.size()>2) {
+				facetKeys.addAll(dims.subList(2, dims.size()));
+			}
+		}
+		
+		return new ChartMetaData(xAxisKey, seriesKeys,facetKeys, yAxisKey);
+	}
+
+
+  private List<String> suggestCharts(AnalysisRequest request) {
         List<String> suggestions = new ArrayList<>();
         int dimensionCount = request.getDimensions() == null ? 0 : request.getDimensions().size();
 

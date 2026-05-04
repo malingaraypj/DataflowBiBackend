@@ -12,13 +12,13 @@ import com.example.dataflowBi.model.TableMetadata;
 import com.example.dataflowBi.service.SchemaService;
 
 @RestController
-@RequestMapping("/api/schema")
+@RequestMapping("/tables")
 public class SchemaController {
 
     @Autowired
     private SchemaService schemaService;
 
-    @GetMapping("/tables")
+    @GetMapping
     public ResponseEntity<List<TableMetadata>> getTables() {
         try {
             return ResponseEntity.ok(schemaService.getSchema());

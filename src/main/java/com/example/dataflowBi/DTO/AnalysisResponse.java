@@ -11,8 +11,7 @@ import lombok.Data;
 public class AnalysisResponse {
     // The actual aggregated rows from the database
     private List<Map<String, Object>> data;
-    
-    // An intelligent list of what charts the frontend should offer the user
     private List<String> suggestedChartTypes;
+    private ChartMetaData metaData;
 }
 
