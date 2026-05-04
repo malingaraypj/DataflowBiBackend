@@ -10,9 +10,8 @@ import lombok.Data;
 public class AnalysisRequest {
 	private String tableName;
 	private List<String> dimensions;
-	private String measureColumn;
+	private List<String> measureColumns;
 	private String aggregationType;  
 	
 	private List<FilterRequest> filters;
-	private List<SortRequest> sorts;
 }
