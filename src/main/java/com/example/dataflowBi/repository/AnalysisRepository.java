@@ -48,6 +48,7 @@ public class AnalysisRepository {
             }
         }
 
+
         // 3. Add FROM Table
         sql.append(" FROM ").append(request.getTableName());
 
