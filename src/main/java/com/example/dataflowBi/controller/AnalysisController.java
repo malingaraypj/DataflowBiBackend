@@ -24,6 +24,7 @@ public class AnalysisController {
     @PostMapping
     public ResponseEntity<?> performAnalysis(@RequestBody AnalysisRequest request) {
         try {
+        	System.out.println(request);
             AnalysisResponse response = analysisService.executeAnalysis(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {

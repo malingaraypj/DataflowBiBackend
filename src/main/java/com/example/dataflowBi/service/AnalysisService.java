@@ -133,10 +133,12 @@ public class AnalysisService {
     
     if (dimensionCount == 1) {
         String dimName = request.getDimensions().get(0);
-
-         suggestions.add(new ChartSuggestion("BAR", dimName, mainMeasure, null, "Categorical comparison"));
-         suggestions.add(new ChartSuggestion("PIE", dimName, mainMeasure, null, "Part-to-whole relationship"));
-         suggestions.add(new ChartSuggestion("DONUT", dimName, mainMeasure, null, ""));
+        
+        if(measureCount == 1) {
+        	suggestions.add(new ChartSuggestion("BAR", dimName, mainMeasure, null, "Categorical comparison"));
+        	suggestions.add(new ChartSuggestion("PIE", dimName, mainMeasure, null, "Part-to-whole relationship"));
+        	suggestions.add(new ChartSuggestion("DONUT", dimName, mainMeasure, null, ""));        	
+        }
         
         
         if (measureCount > 1) {
