@@ -65,6 +65,8 @@ public class KpiService {
     private List<String> getFunctionsForType(String logicalType) {
 
         List<String> functions = new ArrayList<>();
+        
+        System.out.println(logicalType);
 
         switch (logicalType) {
 

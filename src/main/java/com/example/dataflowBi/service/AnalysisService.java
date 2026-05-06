@@ -107,10 +107,9 @@ public class AnalysisService {
                 "Bubble size based on " + sizeCol
             ));
 
-            // Bonus: Suggest a correlation matrix/heatmap for ALL measures
-            suggestions.add(new ChartSuggestion(
-                "CORRELATION_MATRIX", null, null, null, "View all correlations"
-            ));
+//            suggestions.add(new ChartSuggestion(
+//                "CORRELATION_MATRIX", null, null, null, "View all correlations"
+//            ));
         }
     }
 

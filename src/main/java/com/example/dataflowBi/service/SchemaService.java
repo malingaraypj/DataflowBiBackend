@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class SchemaService {
         try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             
-            // 1. Get all tables (Filter by 'TABLE' to ignore system views)
+            // 1. Get all tables 
             ResultSet tableRes = metaData.getTables(connection.getCatalog(), null, "%", new String[]{"TABLE"});
 
             while (tableRes.next()) {
@@ -42,13 +43,24 @@ public class SchemaService {
                     
                     columns.add(new ColumnMetadata(colName, typeName, mapToLogicalType(typeName)));
                 }
-                tables.add(new TableMetadata(tableName, columns));
+                
+             // Get the total row count for this table
+                long rowCount = 0;
+                try (Statement stmt = connection.createStatement();
+                     ResultSet countRes = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName)) {
+                    if (countRes.next()) {
+                        rowCount = countRes.getLong(1);
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Failed to get row count for table " + tableName + ": " + e.getMessage());
+                }
+
+                tables.add(new TableMetadata(tableName, columns,rowCount));
             }
         }
         return tables;
     }
 
-    // Basic logic to help the frontend decide on chart types later
     private String mapToLogicalType(String typeName) {
         String type = typeName.toUpperCase();
         if (type.contains("CHAR") || type.contains("TEXT")) return "STRING";

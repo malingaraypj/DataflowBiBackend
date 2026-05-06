@@ -55,6 +55,8 @@ public class KpiRepository {
                 sql = "SELECT " + function +
                       "(`" + column + "`) AS value FROM " + table;
         }
+        
+        System.out.println(sql);
 
         Map<String, Object> result = jdbcTemplate.queryForMap(sql);
         return result.get("value");

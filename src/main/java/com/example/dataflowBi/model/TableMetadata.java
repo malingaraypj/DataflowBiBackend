@@ -10,4 +10,5 @@ import lombok.Data;
 public class TableMetadata {
 	private String tableName;
 	private List<ColumnMetadata> columns;
+	private long rowCount;
 }

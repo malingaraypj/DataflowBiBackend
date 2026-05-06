@@ -186,8 +186,6 @@ public class AnalysisRepository {
         sql.append(" GROUP BY ").append(dateExpr); 
         sql.append(" ORDER BY ").append(dateExpr).append(" ASC");
         
-        System.out.println(sql);
-        
 
         return jdbcTemplate.queryForList(sql.toString(), queryArgs.toArray());
     }
