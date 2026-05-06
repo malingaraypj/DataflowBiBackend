@@ -15,7 +15,15 @@ public class AnalysisService {
     AnalysisRepository analysisRepository;
 
     public AnalysisResponse executeAnalysis(AnalysisRequest request) {
-        List<Map<String, Object>> rawData = analysisRepository.fetchAnalysedData(request);
+    	
+        List<Map<String, Object>> rawData;
+        
+        if(request.getDateColumn() !=null && !request.getDateColumn().isEmpty()) {
+        	rawData = analysisRepository.fetchAnalysedDataByDate(request);
+        }else {
+        	rawData = analysisRepository.fetchAnalysedData(request);
+        }
+        
         
         //  Prepare numeric data for correlation calculation
         Map<String, double[]> correlationData = prepareCorrelationData(request.getMeasureColumns(), rawData);
@@ -47,7 +55,9 @@ public class AnalysisService {
     }
 
     private ChartMetaData generateMetadata(AnalysisRequest request, List<ChartSuggestion> suggestions) {
-        // If we found a strong correlation, we should use those columns as default axes!
+        
+    	
+    	// If we found a strong correlation, we should use those columns as default axes!
         if (!suggestions.isEmpty() && suggestions.get(0).getChartType().equals("SCATTER_PLOT")) {
             ChartSuggestion top = suggestions.get(0);
             return new ChartMetaData(
@@ -106,32 +116,49 @@ public class AnalysisService {
 
     // Determine the main measure to use for the Y-Axis in standard charts
     String mainMeasure = measureCount > 0 ? request.getMeasureColumns().get(0) : null;
+    
+
 
     // 2. Handle Dimensions (Line, Bar, Pie, etc.)
     if (dimensionCount == 0 && measureCount < 2) {
-        suggestions.add(new ChartSuggestion("KPI_CARD", null, mainMeasure, null, ""));
-        suggestions.add(new ChartSuggestion("GAUGE", null, mainMeasure, null, ""));
+//        suggestions.add(new ChartSuggestion("KPI_CARD", null, mainMeasure, null, ""));
+//        suggestions.add(new ChartSuggestion("GAUGE", null, mainMeasure, null, ""));
         
-    } else if (dimensionCount == 1) {
+    } 
+    
+    if(request.getDateColumn() != null && !request.getDateColumn().isEmpty()) {
+    	suggestions.add(new ChartSuggestion("LINE", request.getDateColumn().get("columnName"), mainMeasure, null, "Trend over time"));
+        suggestions.add(new ChartSuggestion("AREA", request.getDateColumn().get("columnName"), mainMeasure, null, "Volume over time"));
+    }
+    
+    if (dimensionCount == 1) {
         String dimName = request.getDimensions().get(0);
-        String dimNameLower = dimName.toLowerCase();
 
-        if (dimNameLower.contains("date") || dimNameLower.contains("time") || dimNameLower.contains("month") || dimNameLower.contains("year")) {
-            suggestions.add(new ChartSuggestion("LINE", dimName, mainMeasure, null, "Trend over time"));
-            suggestions.add(new ChartSuggestion("AREA", dimName, mainMeasure, null, "Volume over time"));
-            suggestions.add(new ChartSuggestion("BAR", dimName, mainMeasure, null, ""));
-        } else {
-            suggestions.add(new ChartSuggestion("BAR", dimName, mainMeasure, null, "Categorical comparison"));
-            suggestions.add(new ChartSuggestion("PIE", dimName, mainMeasure, null, "Part-to-whole relationship"));
-            suggestions.add(new ChartSuggestion("DONUT", dimName, mainMeasure, null, ""));
+         suggestions.add(new ChartSuggestion("BAR", dimName, mainMeasure, null, "Categorical comparison"));
+         suggestions.add(new ChartSuggestion("PIE", dimName, mainMeasure, null, "Part-to-whole relationship"));
+         suggestions.add(new ChartSuggestion("DONUT", dimName, mainMeasure, null, ""));
+        
+        
+        if (measureCount > 1) {
+            suggestions.add(new ChartSuggestion(
+                "GROUPED_BAR", dimName, null, null, "Compare multiple measures across stores"
+            ));
+            suggestions.add(new ChartSuggestion(
+                "STACKED_BAR", dimName, null, null, "Total volume of measures per store"
+            ));
         }
         
-    } else if (dimensionCount >= 2) {
+    }else if (dimensionCount >= 2) {
         String primaryDim = request.getDimensions().get(0);
         suggestions.add(new ChartSuggestion("STACKED_BAR", primaryDim, mainMeasure, null, ""));
         suggestions.add(new ChartSuggestion("GROUPED_BAR", primaryDim, mainMeasure, null, ""));
-        suggestions.add(new ChartSuggestion("HEATMAP", primaryDim, mainMeasure, null, ""));
-    }
+        
+    } 
+    
+    if(dimensionCount == 2 && measureCount == 1) {
+    	String primaryDim = request.getDimensions().get(0);
+    	suggestions.add(new ChartSuggestion("HEATMAP", primaryDim, mainMeasure, null, ""));
+    } 
 
     return suggestions;
 }
