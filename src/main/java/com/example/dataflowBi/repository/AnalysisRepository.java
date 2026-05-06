@@ -16,50 +16,98 @@ public class AnalysisRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> fetchAnalysedData(AnalysisRequest request) {
-        StringBuilder sql = new StringBuilder("SELECT ");
-        List<Object> queryArgs = new ArrayList<>();
+    StringBuilder sql = new StringBuilder("SELECT ");
+    List<Object> queryArgs = new ArrayList<>();
+    
+    List<String> selectParts = new ArrayList<>();
 
-        // Handle Dimensions
-        if (request.getDimensions() != null && !request.getDimensions().isEmpty()) {
-            for (String dim : request.getDimensions()) {
-                sql.append(dim).append(", ");
-            }
-        }
-        
-
-
-        // Handle Multiple Measures (Crucial for Scatter Plots)
-        List<String> measures = request.getMeasureColumns();
-        if (measures != null && !measures.isEmpty()) {
-            for (int i = 0; i < measures.size(); i++) {
-                String measure = measures.get(i);
-                sql.append(request.getAggregationType())
-                   .append("(")
-                   .append(measure)
-                   .append(")");
-
-                if (measures.size() == 1) {
-                    sql.append(" as value ");
-                } else {
-                    sql.append(" as ").append(measure).append(" ");
-                }
-
-                if (i < measures.size() - 1) {
-                    sql.append(", ");
-                }
-            }
-        }
-
-        //  Add FROM Table
-        sql.append(" FROM ").append(request.getTableName());
-   
-        // Add GROUP BY
-        if (request.getDimensions() != null && !request.getDimensions().isEmpty()) {
-            sql.append(" GROUP BY ").append(String.join(", ", request.getDimensions()));
-        }
-
-        return jdbcTemplate.queryForList(sql.toString(), queryArgs.toArray());
+    // 1. Handle Dimensions
+    if (request.getDimensions() != null && !request.getDimensions().isEmpty()) {
+        selectParts.addAll(request.getDimensions());
     }
+    
+    // 2. Handle Measures (Safely handling Aggregation for Scatter Plots)
+    List<String> measures = request.getMeasureColumns();
+    if (measures != null && !measures.isEmpty()) {
+        String aggType = request.getAggregationType();
+        boolean hasAgg = aggType != null && !aggType.trim().isEmpty() && !aggType.equalsIgnoreCase("NONE");
+
+        for (int i = 0; i < measures.size(); i++) {
+            String measure = measures.get(i);
+            String alias = (measures.size() == 1) ? "value" : measure;
+            
+            if (hasAgg) {
+                selectParts.add(aggType + "(" + measure + ") as " + alias);
+            } else {
+                // Raw data for point-to-point scatter plots!
+                selectParts.add(measure + " as " + alias);
+            }
+        }
+    }
+
+    // Join the SELECT parts with a comma (Fixes the trailing comma SQL error)
+    if (selectParts.isEmpty()) {
+        sql.append("* "); // Fallback if no dims or measures are provided
+    } else {
+        sql.append(String.join(", ", selectParts));
+    }
+
+    // 3. Add FROM Table
+    sql.append(" FROM ").append(request.getTableName());
+    
+    // 4. Add WHERE (Filters)
+    if (request.getFilters() != null && !request.getFilters().isEmpty()) {
+        sql.append(" WHERE ");
+        for (int i = 0; i < request.getFilters().size(); i++) {
+            FilterRequest filter = request.getFilters().get(i);
+            if (i > 0) sql.append(" AND ");
+      
+            String operator = filter.getOperator().toUpperCase();
+            List<Object> values = filter.getValues();
+            sql.append(filter.getColumnName());
+      
+            // Safe guards added for list sizes
+            switch (operator) {
+                case "CONTAINS": 
+                    sql.append(" LIKE ?"); 
+                    queryArgs.add("%" + (values.size() > 0 ? values.get(0) : "") + "%");
+                    break;
+                case "BETWEEN": 
+                    sql.append(" BETWEEN ? AND ?");
+                    queryArgs.add(values.size() > 0 ? values.get(0) : 0); 
+                    queryArgs.add(values.size() > 1 ? values.get(1) : 0); // Prevent OutOfBounds
+                    break;
+                case "GREATER_THAN": 
+                    sql.append(" > ? "); 
+                    queryArgs.add(values.size() > 0 ? values.get(0) : 0);
+                    break;
+                case "LESS_THAN": 
+                    sql.append(" < ? "); 
+                    queryArgs.add(values.size() > 0 ? values.get(0) : 0); 
+                    break;
+                case "NOT_EQUALS": 
+                    sql.append(" != ? ");
+                    queryArgs.add(values.size() > 0 ? values.get(0) : "");
+                    break;
+                case "EQUALS": 
+                default:
+                    sql.append(" = ? "); 
+                    queryArgs.add(values.size() > 0 ? values.get(0) : "");
+            }
+        }
+    }
+
+    // 5. Add GROUP BY (Only if dimensions exist AND we are using an aggregation function)
+    String aggType = request.getAggregationType();
+    boolean hasAgg = aggType != null && !aggType.trim().isEmpty() && !aggType.equalsIgnoreCase("NONE");
+    
+    if (hasAgg && request.getDimensions() != null && !request.getDimensions().isEmpty()) {
+        sql.append(" GROUP BY ").append(String.join(", ", request.getDimensions()));
+    }
+
+    return jdbcTemplate.queryForList(sql.toString(), queryArgs.toArray());
+}
+
     
     public List<Map<String, Object>> fetchAnalysedDataByDate(AnalysisRequest request) {
         StringBuilder sql = new StringBuilder("SELECT ");
@@ -96,8 +144,52 @@ public class AnalysisRepository {
                 }
             }
         }
+        
+//      4. Add WHERE (Filters)
+      if (request.getFilters() != null && !request.getFilters().isEmpty()) {
+        sql.append(" WHERE ");
+        for (int i = 0; i < request.getFilters().size(); i++) {
+            FilterRequest filter = request.getFilters().get(i);
+            if (i > 0) sql.append(" AND ");
+      
+            String operator = filter.getOperator().toUpperCase();
+            List<Object> values = filter.getValues();
+            sql.append(filter.getColumnName());
+      
+            switch (operator) {
+                case "EQUALS": 
+                	sql.append(" = ? "); 
+                	queryArgs.add(values.get(0)); 
+                	break;
+                case "CONTAINS": 
+                	sql.append(" LIKE ?"); 
+                	queryArgs.add("%" + values.get(0) + "%");
+                	break;
+                case "BETWEEN": 
+                	sql.append(" BETWEEN ? AND ?");
+                	queryArgs.add(values.get(0)); 
+                	queryArgs.add(values.get(1));
+                	break;
+                case "GREATER_THAN": 
+                	sql.append(" > ? "); 
+                	queryArgs.add(values.get(0));
+                	break;
+                case "LESS_THAN": 
+                	sql.append(" < ? "); 
+                	queryArgs.add(values.get(0)); 
+                	break;
+                case "NOT_EQUALS": 
+                	sql.append(" != ? ");
+                	queryArgs.add(values.get(0));
+                	break;
+                default:
+                	sql.append(" = ? "); 
+                	queryArgs.add(values.get(0));
+            }
+        }
+      }
 
-        // 4. FROM and GROUP BY
+        // 5. FROM and GROUP BY
         sql.append(" FROM ").append(request.getTableName());
         sql.append(" GROUP BY ").append(dateExpr); 
         sql.append(" ORDER BY ").append(dateExpr).append(" ASC");
@@ -125,47 +217,5 @@ public class AnalysisRepository {
 
 
 
-// 4. Add WHERE (Filters)
-//if (request.getFilters() != null && !request.getFilters().isEmpty()) {
-//  sql.append(" WHERE ");
-//  for (int i = 0; i < request.getFilters().size(); i++) {
-//      FilterRequest filter = request.getFilters().get(i);
-//      if (i > 0) sql.append(" AND ");
-//
-//      String operator = filter.getOperator().toUpperCase();
-//      List<Object> values = filter.getValues();
-//      sql.append(filter.getColumnName());
-//
-//      switch (operator) {
-//          case "EQUALS": 
-//          	sql.append(" = ? "); 
-//          	queryArgs.add(values.get(0)); 
-//          	break;
-//          case "CONTAINS": 
-//          	sql.append(" LIKE ?"); 
-//          	queryArgs.add("%" + values.get(0) + "%");
-//          	break;
-//          case "BETWEEN": 
-//          	sql.append(" BETWEEN ? AND ?");
-//          	queryArgs.add(values.get(0)); 
-//          	queryArgs.add(values.get(1));
-//          	break;
-//          case "GREATER_THAN": 
-//          	sql.append(" > ? "); 
-//          	queryArgs.add(values.get(0));
-//          	break;
-//          case "LESS_THAN": 
-//          	sql.append(" < ? "); 
-//          	queryArgs.add(values.get(0)); 
-//          	break;
-//          case "NOT_EQUALS": 
-//          	sql.append(" != ? ");
-//          	queryArgs.add(values.get(0));
-//          	break;
-//          default:
-//          	sql.append(" = ? "); 
-//          	queryArgs.add(values.get(0));
-//      }
-//  }
-//}
+
 
