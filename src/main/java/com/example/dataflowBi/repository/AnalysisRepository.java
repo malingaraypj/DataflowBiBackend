@@ -137,6 +137,31 @@ public class AnalysisRepository {
             }
         }
         
+        // handle date vs category
+        String aggregationType = request.getAggregationType();
+        List<String> dimensions = request.getDimensions();
+        boolean hasDimensions = dimensions != null && !dimensions.isEmpty();
+        
+        System.out.println(hasDimensions);
+        System.out.println(aggregationType);
+    
+        
+        if(aggregationType.equals("COUNT") && hasDimensions) {
+        	sql.append(", "); 
+            for (int i = 0; i < dimensions.size(); i++) {
+                String dimension = dimensions.get(i);
+                sql.append("COUNT(")
+                   .append(dimension)
+                   .append(")")
+                   .append(" AS ").append(dimension);
+                
+
+                if (i < dimensions.size() - 1) {
+                    sql.append(", ");
+                }
+            }
+        }
+        
 //      4. Add WHERE (Filters)
       if (request.getFilters() != null && !request.getFilters().isEmpty()) {
         sql.append(" WHERE ");
@@ -185,6 +210,8 @@ public class AnalysisRepository {
         sql.append(" FROM ").append(request.getTableName());
         sql.append(" GROUP BY ").append(dateExpr); 
         sql.append(" ORDER BY ").append(dateExpr).append(" ASC");
+        
+        System.out.println(sql);
         
 
         return jdbcTemplate.queryForList(sql.toString(), queryArgs.toArray());

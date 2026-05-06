@@ -18,6 +18,10 @@ public class CorrelationHelper {
     }
 
     public static TopCorrelation findStrongestCorrelation(List<String> measures, Map<String, double[]> dataMap) {
+    	 if (dataMap == null || dataMap.size() < 2) {
+    	        return new TopCorrelation(null, null, 0.0); 
+    	    }
+    	 
         PearsonsCorrelation pearson = new PearsonsCorrelation();
         TopCorrelation bestPair = new TopCorrelation(measures.get(0), measures.get(1), 0.0);
         double maxCorrelation = -1.0;

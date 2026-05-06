@@ -13,6 +13,6 @@ public class AnalysisRequest {
 	private List<String> dimensions;
 	private List<String> measureColumns;
 	private String aggregationType; 
-	private Map<String, String> dateColumn;  //{columnName, by}
+	private Map<String, String> dateColumn;  
 	private List<FilterRequest> filters;
 }

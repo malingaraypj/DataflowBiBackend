@@ -83,7 +83,7 @@ public class AnalysisService {
     int measureCount = request.getMeasureColumns() == null ? 0 : request.getMeasureColumns().size();
 
     // 1. Handle Measures (Scatter & Bubble) with Correlation
-    if (measureCount >= 2 && fetchedData != null && !fetchedData.isEmpty()) {
+    if (measureCount >= 2 && fetchedData != null && fetchedData.size()>=2) {
         // Find the best correlated pair using our helper
         CorrelationHelper.TopCorrelation topPair =
             CorrelationHelper.findStrongestCorrelation(request.getMeasureColumns(), fetchedData);
@@ -116,19 +116,17 @@ public class AnalysisService {
     // Determine the main measure to use for the Y-Axis in standard charts
     String mainMeasure = measureCount > 0 ? request.getMeasureColumns().get(0) : null;
     
-
-
-    // 2. Handle Dimensions (Line, Bar, Pie, etc.)
-    if (dimensionCount == 0 && measureCount < 2) {
-//        suggestions.add(new ChartSuggestion("KPI_CARD", null, mainMeasure, null, ""));
-//        suggestions.add(new ChartSuggestion("GAUGE", null, mainMeasure, null, ""));
-        
-    } 
     
-    if(request.getDateColumn() != null && !request.getDateColumn().isEmpty()) {
-    	suggestions.add(new ChartSuggestion("LINE", request.getDateColumn().get("columnName"), mainMeasure, null, "Trend over time"));
-        suggestions.add(new ChartSuggestion("AREA", request.getDateColumn().get("columnName"), mainMeasure, null, "Volume over time"));
+    boolean hasDateColumn = request.getDateColumn() != null && !request.getDateColumn().isEmpty();
+    boolean hasMeasures = request.getMeasureColumns() != null && !request.getMeasureColumns().isEmpty();
+    boolean isCountAggregation = "COUNT".equalsIgnoreCase(request.getAggregationType());
+
+    if (hasDateColumn && (hasMeasures || isCountAggregation)) {
+        String displayMeasure = isCountAggregation && mainMeasure == null ? "Count" : mainMeasure;
+        suggestions.add(new ChartSuggestion("LINE", request.getDateColumn().get("columnName"), displayMeasure, null, "Trend over time"));
+        suggestions.add(new ChartSuggestion("AREA", request.getDateColumn().get("columnName"), displayMeasure, null, "Volume over time"));
     }
+
     
     if (dimensionCount == 1) {
         String dimName = request.getDimensions().get(0);
