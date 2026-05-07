@@ -28,14 +28,14 @@ public class SchemaService {
         try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             
-            // 1. Get all tables 
+            //  Get all tables 
             ResultSet tableRes = metaData.getTables(connection.getCatalog(), null, "%", new String[]{"TABLE"});
 
             while (tableRes.next()) {
                 String tableName = tableRes.getString("TABLE_NAME");
                 List<ColumnMetadata> columns = new ArrayList<>();
 
-                // 2. Get all columns for this table
+                //  Get all columns for this table
                 ResultSet columnRes = metaData.getColumns(connection.getCatalog(), null, tableName, "%");
                 while (columnRes.next()) {
                     String colName = columnRes.getString("COLUMN_NAME");

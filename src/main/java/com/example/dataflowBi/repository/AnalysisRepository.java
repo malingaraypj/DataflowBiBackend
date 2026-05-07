@@ -19,14 +19,13 @@ public class AnalysisRepository {
         StringBuilder sql = new StringBuilder("SELECT ");
         List<Object> queryArgs = new ArrayList<>();
  
-        // 1. Handle Dimensions
         if (request.getDimensions() != null && !request.getDimensions().isEmpty()) {
             for (String dim : request.getDimensions()) {
                 sql.append(dim).append(", ");
             }
         }
  
-        // 2. Handle Multiple Measures (Crucial for Scatter Plots)
+        //  Handle Multiple Measures (Crucial for Scatter Plots)
         List<String> measures = request.getMeasureColumns();
         if (measures != null && !measures.isEmpty()) {
             for (int i = 0; i < measures.size(); i++) {
@@ -44,10 +43,10 @@ public class AnalysisRepository {
         }
  
  
-        // 3. Add FROM Table
+        // Add FROM Table
         sql.append(" FROM ").append(request.getTableName());
  
-        // 4. Add WHERE (Filters)
+        //  Add WHERE (Filters)
         if (request.getFilters() != null && !request.getFilters().isEmpty()) {
             sql.append(" WHERE ");
             for (int i = 0; i < request.getFilters().size(); i++) {
@@ -91,7 +90,7 @@ public class AnalysisRepository {
             }
         }
  
-        // 5. Add GROUP BY
+        //  Add GROUP BY
         if (request.getDimensions() != null && !request.getDimensions().isEmpty()) {
             sql.append(" GROUP BY ").append(String.join(", ", request.getDimensions()));
         }
@@ -112,7 +111,7 @@ public class AnalysisRepository {
         
         sql.append(dateExpr).append(" AS date_period");
 
-        // 3. Handle Measures
+        //  Handle Measures
         List<String> measures = request.getMeasureColumns();
         if (measures != null && !measures.isEmpty()) {
             sql.append(", "); 
@@ -137,8 +136,7 @@ public class AnalysisRepository {
         List<String> dimensions = request.getDimensions();
         boolean hasDimensions = dimensions != null && !dimensions.isEmpty();
         
-        System.out.println(hasDimensions);
-        System.out.println(aggregationType);
+       
     
         
         if(aggregationType.equals("COUNT") && hasDimensions) {
@@ -157,7 +155,7 @@ public class AnalysisRepository {
             }
         }
         
-//      4. Add WHERE (Filters)
+//       Add WHERE (Filters)
       if (request.getFilters() != null && !request.getFilters().isEmpty()) {
         sql.append(" WHERE ");
         for (int i = 0; i < request.getFilters().size(); i++) {
@@ -201,14 +199,12 @@ public class AnalysisRepository {
         }
       }
 
-        // 5. FROM and GROUP BY
+        //  FROM and GROUP BY
         sql.append(" FROM ").append(request.getTableName());
         sql.append(" GROUP BY ").append(dateExpr); 
         sql.append(" ORDER BY ").append(dateExpr).append(" ASC");
         
-        System.out.println(sql);
         
-
         return jdbcTemplate.queryForList(sql.toString(), queryArgs.toArray());
     }
 

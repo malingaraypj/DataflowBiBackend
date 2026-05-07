@@ -18,7 +18,6 @@ public class KpiController {
 
     @PostMapping
     public ResponseEntity<KpiResponse> getKpis(@RequestBody KpiRequest request) throws Exception {
-    	System.out.println(request);
         return ResponseEntity.ok(kpiService.generateKpis(request));
     }
 }

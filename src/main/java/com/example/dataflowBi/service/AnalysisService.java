@@ -82,7 +82,7 @@ public class AnalysisService {
     int dimensionCount = request.getDimensions() == null ? 0 : request.getDimensions().size();
     int measureCount = request.getMeasureColumns() == null ? 0 : request.getMeasureColumns().size();
 
-    // 1. Handle Measures (Scatter & Bubble) with Correlation
+    // Handle Measures (Scatter & Bubble) with Correlation
     if (measureCount >= 2 && fetchedData != null && fetchedData.size()>=2) {
         // Find the best correlated pair using our helper
         CorrelationHelper.TopCorrelation topPair =
@@ -107,9 +107,6 @@ public class AnalysisService {
                 "Bubble size based on " + sizeCol
             ));
 
-//            suggestions.add(new ChartSuggestion(
-//                "CORRELATION_MATRIX", null, null, null, "View all correlations"
-//            ));
         }
     }
 

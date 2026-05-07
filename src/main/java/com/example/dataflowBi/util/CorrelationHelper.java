@@ -18,7 +18,6 @@ public class CorrelationHelper {
     }
 
     public static TopCorrelation findStrongestCorrelation(List<String> measures, Map<String, double[]> dataMap) {
-    // Basic check for map size or insufficient measures
     if (dataMap == null || measures == null || measures.size() < 2) {
         return new TopCorrelation(null, null, 0.0);
     }
@@ -47,14 +46,12 @@ public class CorrelationHelper {
                         bestPair = new TopCorrelation(m1, m2, correlation);
                     }
                 } catch (Exception e) {
-                    // Log or handle unexpected calculation errors
                 	System.out.println(e);
                 }
             }
         }
     }
 
-    // Return bestPair or a default if no valid correlations were found
     return bestPair != null ? bestPair : new TopCorrelation(null, null, 0.0);
 }
 
