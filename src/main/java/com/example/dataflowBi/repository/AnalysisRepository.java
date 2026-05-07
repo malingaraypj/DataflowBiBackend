@@ -34,14 +34,9 @@ public class AnalysisRepository {
                 sql.append(request.getAggregationType())
                    .append("(")
                    .append(measure)
-                   .append(")");
- 
-                if (measures.size() == 1) {
-                    sql.append(" as value ");
-                } else {
-                    sql.append(" as ").append(measure).append(" ");
-                }
- 
+                   .append(")")
+                   .append(" as ").append(measure).append(" ");
+
                 if (i < measures.size() - 1) {
                     sql.append(", ");
                 }
